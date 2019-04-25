@@ -34,12 +34,24 @@ test preview like so:
 
 ```
 $ ./twostop.py preview images/test.nef
+Reading RAW file images/test.nef.
+Post processing RAW image preview.
+Converting image from array.
+Post processing RAW image.
+Two stop processing.
 ```
 
 You can produce a JPG like so:
 
 ```
 $ ./twostop.py process images/test.nef
+Reading RAW file images/test.nef.
+Post processing RAW image.
+Two stop processing.
+Rendering to file images/test.jpg.
+images/test.nef done.
+
+Done, processed 1 images.
 ```
 
 ## Usage
