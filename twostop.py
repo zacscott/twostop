@@ -11,14 +11,15 @@ import tkinter
 
 class TwoStopCLI(object):
 	"""
-	CLI tool to apply the two stop exposure compensation algorithm.
+	Proof of concept image processor which uses a technique of sacrificing image resolution
+	for light/exposure.
 	"""
 
 	def process(self, *files, expcomp=1.0):
 		"""
-		Process one or more RAW image files applying the 
+		Process one or more RAW image files and output to JPG.
 
-		:param expcomp: Exposure compensation in stops.
+		:param expcomp: Exposure compensation. E.g. 0.25 = -2 stops, 8.0 = +3 stops
 		"""
 		
 		# convert exposure compensation into the format used by rawpy
@@ -47,10 +48,10 @@ class TwoStopCLI(object):
 
 	def preview(self, file, expcomp=1.0):
 		"""
-		Process one or more RAW image files applying the 
+		Process a RAW image file and show a before/after preview + histogram.
 
-		:param file: The RAW file to preview.
-		:param expcomp: Exposure compensation in stops.
+		:param file: The RAW file to process and preview
+		:param expcomp: Exposure compensation. E.g. 0.25 = -2 stops, 8.0 = +3 stops
 		"""
 		
 		# convert exposure compensation into the reciprocal which rawpy accepts
@@ -76,6 +77,11 @@ class TwoStopCLI(object):
 
 
 	def _raw_read(self, path):
+		"""
+		Read in a RAW image file from given path.
+
+		:param path: Path of the RAW file to read.
+		"""
 
 		self._log("Reading RAW file %s." % path)
 
@@ -85,6 +91,12 @@ class TwoStopCLI(object):
 
 
 	def _raw_process(self, image_raw, **kwargs):
+		"""
+		Process the given RAW file to a normal image we can work with.
+
+		:param image_raw: rawpy image to process.
+		:param expcomp: Exposure compensation to apply.
+		"""
 
 		self._log("Post processing RAW image.")
 
@@ -92,7 +104,6 @@ class TwoStopCLI(object):
 
 		image_array = image_raw.postprocess(
 			output_bps=16,
-			half_size=True,
 			exp_shift=expcomp,
 			use_camera_wb=True,
 			fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode.Full,
@@ -106,6 +117,11 @@ class TwoStopCLI(object):
 
 
 	def _raw_process_preview(self, image_raw):
+		"""
+		Process the given RAW image quicker than the normal postprocess.
+
+		:param image_raw: rawpy image to process.
+		"""
 
 		self._log("Post processing RAW image preview.")
 
@@ -121,6 +137,11 @@ class TwoStopCLI(object):
 
 
 	def _image_twostop(self, rows):
+		"""
+		Apply the additive downsampling filter to the given image.
+
+		:param rows: numpy array of pixels, as output by rawpy.
+		"""
 
 		self._log("Two stop processing.")
 
@@ -164,6 +185,11 @@ class TwoStopCLI(object):
 
 
 	def _image_from_array(self, image_array):
+		"""
+		Convert a numpy array output by rawpy to a PIL image.
+
+		:param image_array: numpy array image to convert.
+		"""
 
 		self._log("Converting image from array.")		
 
@@ -173,6 +199,12 @@ class TwoStopCLI(object):
 
 
 	def _image_output(self, path, image):
+		"""
+		Output given PIL image to the given path.
+
+		:param path: Path of output file.
+		:param image: The PIL image to output/save.
+		"""
 
 		self._log("Rendering to file %s." % path)
 
@@ -185,6 +217,12 @@ class TwoStopCLI(object):
 
 
 	def _image_compare_gui(self, image_preview, image_final):
+		"""
+		Build Image comparison GUI. This includes a before/after image + histogram of the final image.
+
+		:param image_preview: The "before" shot
+		:param image_final: The "after" shot
+		"""
 
 		# the width of the preview images
 		PREVIEW_WIDTH = 600
@@ -207,7 +245,6 @@ class TwoStopCLI(object):
 		# build the comparison tk window
 
 		width, height = image_preview.size
-		print("%d x %d" % (width, height))
 		scale_ratio = float(PREVIEW_WIDTH) / width
 		image_preview = image_preview.resize((PREVIEW_WIDTH, int(height*scale_ratio)))
 
@@ -228,7 +265,7 @@ class TwoStopCLI(object):
 
 
 	def _log(self, message):
-		"""Output an info message to the console"""
+		"""Log a message to console"""
 
 		print(message)
 
