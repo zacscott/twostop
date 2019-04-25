@@ -48,13 +48,13 @@ NOTE This only works with RAW images, this will not work with raster images (JPG
 
 ### Process
 
-A RAW image file can be processed like so
+Process a RAW image file and output to a JPG.
 
 ```
 $ ./twostop.py process images/test.nef images/test2.nef --expcomp=1.25
 ```
 
-This will produce a JPG image at `images/test.jpg`.
+This will produce JPG images at `images/test.jpg` and `images/test2.jpg`.
 
 #### Args
 
