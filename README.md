@@ -48,7 +48,7 @@ NOTE This only works with RAW images, this will not work with raster images (JPG
 
 ### Process
 
-Process a RAW image file and output to a JPG.
+Process one or more RAW image files and output to JPG.
 
 ```
 $ ./twostop.py process images/test.nef images/test2.nef --expcomp=1.25
