@@ -3,6 +3,7 @@
 import fire
 import math
 import matplotlib.pyplot as pyplot
+import os
 import PIL.ImageTk as ImageTk
 import PIL.Image as Image
 import rawpy
@@ -34,7 +35,8 @@ class TwoStopCLI(object):
 
 			image_final = self._image_twostop(image_array)
 
-			final_path = "test.jpg"  # TODO actually base off path
+			basename, ext = os.path.splitext(path)
+			final_path = "%s.jpg" % basename
 
 			self._image_output(final_path, image_final)
 			
