@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import fire
 import math
@@ -20,13 +21,11 @@ class TwoStopCLI(object):
 		:param expcomp: Exposure compensation in stops.
 		"""
 		
-		# convert exposure compensation into the reciprocal which rawpy accepts
+		# convert exposure compensation into the format used by rawpy
 		expcomp = 1.0  # TODO calculate this for stops
 
-		# loop through each of the input images and process them
+		# process each of the input images
 		for path in files:
-
-			# TODO check if file exists
 
 			image_raw = self._raw_read(path)
 
@@ -35,14 +34,45 @@ class TwoStopCLI(object):
 				expcomp=expcomp
 			)
 
-			final_image = self._image_twostop(image_array)
+			image_final = self._image_twostop(image_array)
 
-			final_path = "test.png"  # TODO actually base off path
-			self._image_output(final_path, final_image)
+			final_path = "test.jpg"  # TODO actually base off path
+
+			self._image_output(final_path, image_final)
 			
-			self._log("Done\n")
+			self._log("%s done.\n" % path)
 
-		self._log("Done. Processed %d images." % len(files))
+		self._log("Done, processed %d images." % len(files))
+
+
+	def preview(self, file, expcomp=1.0):
+		"""
+		Process one or more RAW image files applying the 
+
+		:param file: The RAW file to preview.
+		:param expcomp: Exposure compensation in stops.
+		"""
+		
+		# convert exposure compensation into the reciprocal which rawpy accepts
+		expcomp = 1.0  # TODO calculate this for stops
+
+		image_raw = self._raw_read(file)
+
+		# process the preview image
+		image_preview_array = self._raw_process_preview(image_raw)
+		image_preview = self._image_from_array(image_preview_array)
+
+		# process final/two stop image
+
+		image_array = self._raw_process(
+			image_raw,
+			expcomp=expcomp
+		)
+
+		image_final = self._image_twostop(image_array)
+
+		# display comparison & histogram window to user
+		self._image_compare_gui(image_preview, image_final)
 
 
 	def _raw_read(self, path):
@@ -77,13 +107,12 @@ class TwoStopCLI(object):
 
 	def _raw_process_preview(self, image_raw):
 
-		self._log("Post processing RAW preview image.")
+		self._log("Post processing RAW image preview.")
 
 		image_array = image_raw.postprocess(
 			output_bps=8,
 			half_size=True,
 			use_camera_wb=True,
-			fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode.Full,
 			output_color=rawpy.ColorSpace.sRGB,
 			no_auto_bright=True
 		)
@@ -134,11 +163,68 @@ class TwoStopCLI(object):
 		return intense
 
 
+	def _image_from_array(self, image_array):
+
+		self._log("Converting image from array.")		
+
+		image = Image.fromarray(image_array.astype('uint8'))
+
+		return image
+
+
 	def _image_output(self, path, image):
 
 		self._log("Rendering to file %s." % path)
 
-		image.save(path)
+		image.save(
+			path, 
+			quality=100, 
+			optimize=True, 
+			progressive=False
+		)
+
+
+	def _image_compare_gui(self, image_preview, image_final):
+
+		# the width of the preview images
+		PREVIEW_WIDTH = 600
+
+
+		root = tkinter.Tk()
+		root.title('Preview')
+
+		# build the historgram window
+
+		histogram = image_final.histogram()
+
+		fig = pyplot.gcf()
+		fig.canvas.set_window_title('Histogram')
+
+		pyplot.plot(histogram[0:256], color="#ff0000", alpha=0.5)
+		pyplot.plot(histogram[256:512], color="#00ff00", alpha=0.5)
+		pyplot.plot(histogram[512:768], color="#0000ff", alpha=0.5)
+
+		# build the comparison tk window
+
+		width, height = image_preview.size
+		print("%d x %d" % (width, height))
+		scale_ratio = float(PREVIEW_WIDTH) / width
+		image_preview = image_preview.resize((PREVIEW_WIDTH, int(height*scale_ratio)))
+
+		image_preview_tk = ImageTk.PhotoImage(image_preview)
+		image_preview_panel = tkinter.Label(root, image = image_preview_tk)
+		image_preview_panel.pack(side="left", fill="both", expand="yes")
+
+		width, height = image_final.size
+		scale_ratio = float(PREVIEW_WIDTH) / width
+		image_final = image_final.resize((PREVIEW_WIDTH, int(height*scale_ratio)))
+
+		image_final_tk = ImageTk.PhotoImage(image_final)
+		image_final_panel = tkinter.Label(root, image = image_final_tk)
+		image_final_panel.pack(side="left", fill="both", expand="yes")
+
+		pyplot.show()
+		root.mainloop()
 
 
 	def _log(self, message):
