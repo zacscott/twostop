@@ -21,9 +21,6 @@ class TwoStopCLI(object):
 
 		:param expcomp: Exposure compensation. E.g. 0.25 = -2 stops, 8.0 = +3 stops
 		"""
-		
-		# convert exposure compensation into the format used by rawpy
-		expcomp = 1.0  # TODO calculate this for stops
 
 		# process each of the input images
 		for path in files:
@@ -53,9 +50,6 @@ class TwoStopCLI(object):
 		:param file: The RAW file to process and preview
 		:param expcomp: Exposure compensation. E.g. 0.25 = -2 stops, 8.0 = +3 stops
 		"""
-		
-		# convert exposure compensation into the reciprocal which rawpy accepts
-		expcomp = 1.0  # TODO calculate this for stops
 
 		image_raw = self._raw_read(file)
 
@@ -136,31 +130,29 @@ class TwoStopCLI(object):
 		return image_array
 
 
-	def _image_twostop(self, rows):
+	def _image_twostop(self, image_array):
 		"""
 		Apply the additive downsampling filter to the given image.
+		This expects 16bit image as array and will return a 8bit PIL image.
 
-		:param rows: numpy array of pixels, as output by rawpy.
+		:param image_array: numpy array of pixels, as output by rawpy.
 		"""
 
 		self._log("Two stop processing.")
 
-		# NOTE expects 16bit image as array 
-		#      output 8bit PIL image
-
-		row_first = rows[0]
-		height_half = int(math.ceil(len(rows)/2))
+		row_first = image_array[0]
+		height_half = int(math.ceil(len(image_array)/2))
 		width_half = int(int(len(row_first)/2))
 
-		intense = Image.new(
+		image_processed = Image.new(
 			'RGB',
 			(width_half, height_half),
 			0
 		)
 
 		for y in range(0, height_half):
-			row1 = rows[y*2]
-			row2 = rows[y*2+1]
+			row1 = image_array[y*2]
+			row2 = image_array[y*2+1]
 
 			for x in range(0, width_half):
 
@@ -179,9 +171,9 @@ class TwoStopCLI(object):
 
 					pixel.append(int(subpixel))
 
-				intense.putpixel((x, y), (pixel[0], pixel[1], pixel[2]))
+				image_processed.putpixel((x, y), (pixel[0], pixel[1], pixel[2]))
 
-		return intense
+		return image_processed
 
 
 	def _image_from_array(self, image_array):
